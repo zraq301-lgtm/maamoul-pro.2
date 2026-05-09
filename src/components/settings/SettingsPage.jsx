@@ -15,30 +15,23 @@ export default function SettingsPage() {
   const [orgName, setOrgName] = useState(currentOrg?.name || '');
   const [orgIndustry, setOrgIndustry] = useState(currentOrg?.industry || '');
   const [saving, setSaving] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
   const [members, setMembers] = useState([]);
-  const [invitations, setInvitations] = useState([]);
 
   React.useEffect(() => {
     if (!currentOrg) return;
     const loadMembers = async () => {
-      const { data } = await supabase
-        .from('organization_members')
-        .select('*, user:user_id(email, raw_user_meta_data)')
-        .eq('organization_id', currentOrg.id);
-      setMembers(data || []);
-    };
-    const loadInvitations = async () => {
-      const { data } = await supabase
-        .from('invitations')
-        .select('*')
-        .eq('organization_id', currentOrg.id)
-        .is('accepted_at', null);
-      setInvitations(data || []);
+      try {
+        const { data } = await supabase
+          .from('organization_members')
+          .select('*')
+          .eq('organization_id', currentOrg.id);
+        setMembers(data || []);
+      } catch (err) {
+        console.warn('Load members error:', err.message);
+        setMembers([]);
+      }
     };
     loadMembers();
-    loadInvitations();
   }, [currentOrg]);
 
   const handleSaveOrg = async () => {
@@ -49,30 +42,9 @@ export default function SettingsPage() {
         .update({ name: orgName, industry: orgIndustry })
         .eq('id', currentOrg.id);
     } catch (err) {
-      console.error(err);
+      console.warn('Save org error:', err.message);
     }
     setSaving(false);
-  };
-
-  const handleInvite = async () => {
-    if (!inviteEmail) return;
-    try {
-      await supabase.from('invitations').insert({
-        organization_id: currentOrg.id,
-        email: inviteEmail,
-        role: inviteRole,
-        invited_by: user.id,
-      });
-      setInviteEmail('');
-      const { data } = await supabase
-        .from('invitations')
-        .select('*')
-        .eq('organization_id', currentOrg.id)
-        .is('accepted_at', null);
-      setInvitations(data || []);
-    } catch (err) {
-      console.error(err);
-    }
   };
 
   const tabs = [
@@ -177,78 +149,32 @@ export default function SettingsPage() {
                   <Users className="w-5 h-5 text-primary-600" />
                   أعضاء الفريق
                 </h2>
-                <div className="space-y-3">
-                  {members.map(member => {
-                    const roleInfo = ROLES[member.role] || ROLES.viewer;
-                    return (
-                      <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm">
-                          {(member.user?.raw_user_meta_data?.full_name || member.user?.email || '?')[0]?.toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-slate-700 truncate">
-                            {member.user?.raw_user_meta_data?.full_name || member.user?.email}
-                          </div>
-                          <div className="text-xs text-slate-400">{member.user?.email}</div>
-                        </div>
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${roleInfo.bg} ${roleInfo.color}`}>
-                          {roleInfo.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Invite */}
-              {hasPermission('admin') && (
-                <div className="glass-card p-6">
-                  <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <Mail className="w-5 h-5 text-accent-600" />
-                    دعوة عضو جديد
-                  </h3>
-                  <div className="flex gap-3">
-                    <input
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      className="input-field flex-1"
-                      placeholder="email@example.com"
-                    />
-                    <select
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value)}
-                      className="input-field w-32"
-                    >
-                      {ROLE_LIST.filter(r => r !== 'owner').map(role => (
-                        <option key={role} value={role}>{ROLES[role].label}</option>
-                      ))}
-                    </select>
-                    <button onClick={handleInvite} className="btn-accent flex items-center gap-2">
-                      <Plus className="w-5 h-5" /> دعوة
-                    </button>
+                {members.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                    <p className="text-slate-400">لا يوجد أعضاء مسجلين بعد</p>
                   </div>
-
-                  {invitations.length > 0 && (
-                    <div className="mt-6 space-y-2">
-                      <h4 className="text-sm font-bold text-slate-500">الدعوات المعلقة</h4>
-                      {invitations.map(inv => (
-                        <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
-                          <div>
-                            <span className="text-sm text-slate-700">{inv.email}</span>
-                            <span className={`mr-2 px-2 py-0.5 rounded text-xs ${ROLES[inv.role]?.bg} ${ROLES[inv.role]?.color}`}>
-                              {ROLES[inv.role]?.label}
-                            </span>
+                ) : (
+                  <div className="space-y-3">
+                    {members.map(member => {
+                      const roleInfo = ROLES[member.role] || ROLES.viewer;
+                      return (
+                        <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm">
+                            م
                           </div>
-                          <span className="text-xs text-slate-400">
-                            تنتهي {new Date(inv.expires_at).toLocaleDateString('ar-EG')}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-slate-700 truncate">عضو</div>
+                          </div>
+                          <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${roleInfo.bg} ${roleInfo.color}`}>
+                            {roleInfo.label}
                           </span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

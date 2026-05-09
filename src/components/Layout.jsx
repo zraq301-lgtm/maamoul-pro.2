@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useAuth, ROLES } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Package, ShoppingCart, Tag, Factory, Trash2,
-  Wallet, Truck, BarChart3, FileText, Users, Settings, ChevronLeft,
-  Menu, LogOut, Building2, ChevronDown, Plus, Workflow, Layers,
+  Wallet, Truck, BarChart3, FileText, Users, Settings,
+  Menu, Building2, ChevronDown, Plus, Workflow, Layers,
   Bell, Search, Moon, Sun, X
 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Layout({ activePage, setActivePage, children }) {
-  const { user, currentOrg, currentRole, organizations, switchOrganization, signOut } = useAuth();
+  const { user, currentOrg, currentRole, organizations, switchOrganization } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [orgDropdown, setOrgDropdown] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -57,7 +57,7 @@ export default function Layout({ activePage, setActivePage, children }) {
                 <Layers className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-slate-800"> RaqQ</h1>
+                <h1 className="text-lg font-bold text-slate-800">RaqQ</h1>
                 <p className="text-xs text-slate-400">Universal Admin</p>
               </div>
             </div>
@@ -125,15 +125,12 @@ export default function Layout({ activePage, setActivePage, children }) {
         <div className="p-4 border-t border-slate-100">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm">
-              {user?.email?.[0]?.toUpperCase() || 'U'}
+              {user?.user_metadata?.full_name?.[0] || 'م'}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-slate-700 truncate">{user?.user_metadata?.full_name || user?.email}</div>
-              <div className="text-xs text-slate-400 truncate">{user?.email}</div>
+              <div className="text-sm font-bold text-slate-700 truncate">{user?.user_metadata?.full_name || 'المدير'}</div>
+              <div className={`text-xs ${roleInfo.color}`}>{roleInfo.label}</div>
             </div>
-            <button onClick={signOut} className="p-2 rounded-lg hover:bg-danger-50 text-slate-400 hover:text-danger-500 transition-colors">
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </aside>

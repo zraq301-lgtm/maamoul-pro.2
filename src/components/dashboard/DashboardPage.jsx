@@ -18,24 +18,28 @@ export default function DashboardPage({ setActivePage }) {
     if (!currentOrg) return;
     const loadStats = async () => {
       setLoading(true);
-      const { count: recordCount } = await supabase
-        .from('dynamic_records')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', currentOrg.id);
+      try {
+        const { count: recordCount } = await supabase
+          .from('dynamic_records')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', currentOrg.id);
 
-      const { data: recentData } = await supabase
-        .from('dynamic_records')
-        .select('*, dynamic_entities(name, icon, color)')
-        .eq('organization_id', currentOrg.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        const { data: recentData } = await supabase
+          .from('dynamic_records')
+          .select('*, dynamic_entities(name, icon, color)')
+          .eq('organization_id', currentOrg.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
 
-      setStats({
-        totalRecords: recordCount || 0,
-        totalEntities: entities.length,
-        totalWorkflows: workflows.length,
-        recentRecords: recentData || [],
-      });
+        setStats({
+          totalRecords: recordCount || 0,
+          totalEntities: entities.length,
+          totalWorkflows: workflows.length,
+          recentRecords: recentData || [],
+        });
+      } catch (err) {
+        console.warn('Load stats error:', err.message);
+      }
       setLoading(false);
     };
     loadStats();
@@ -53,7 +57,7 @@ export default function DashboardPage({ setActivePage }) {
       {/* Welcome Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800">
-          مرحباً، {user?.user_metadata?.full_name || 'مستخدم'}
+          مرحباً، {user?.user_metadata?.full_name || 'المدير'}
         </h1>
         <p className="text-slate-500 mt-1">لوحة التحكم - {currentOrg?.name}</p>
       </div>

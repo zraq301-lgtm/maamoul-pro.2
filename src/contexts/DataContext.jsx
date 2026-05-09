@@ -1,13 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabase';
 
 const DataContext = createContext({});
 
 export const useData = () => useContext(DataContext);
 
 export function DataProvider({ children }) {
-  const { currentOrg, user, hasPermission } = useAuth();
+  const { currentOrg, hasPermission } = useAuth();
   const [entities, setEntities] = useState([]);
   const [workflows, setWorkflows] = useState([]);
   const [dashboardWidgets, setDashboardWidgets] = useState([]);
@@ -78,14 +78,6 @@ export function DataProvider({ children }) {
     }
   }, [currentOrg]);
 
-  useEffect(() => {
-    if (currentOrg) {
-      fetchEntities();
-      fetchWorkflows();
-      fetchDashboardWidgets();
-    }
-  }, [currentOrg, fetchEntities, fetchWorkflows, fetchDashboardWidgets]);
-
   const createEntity = useCallback(async (entityData) => {
     if (!currentOrg || !hasPermission('manager')) return;
     const { data, error } = await supabase
@@ -131,7 +123,6 @@ export function DataProvider({ children }) {
         entity_id: entityId,
         organization_id: currentOrg.id,
         name: recordData.name || 'New Record',
-        created_by: user.id,
       })
       .select()
       .single();
@@ -150,7 +141,7 @@ export function DataProvider({ children }) {
       await supabase.from('record_values').insert(values);
     }
     return record;
-  }, [currentOrg, hasPermission, user]);
+  }, [currentOrg, hasPermission]);
 
   const updateRecord = useCallback(async (recordId, updates) => {
     if (!hasPermission('member')) return;
@@ -207,12 +198,12 @@ export function DataProvider({ children }) {
     const slug = orgData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now().toString(36);
     const { data, error } = await supabase
       .from('organizations')
-      .insert({ ...orgData, slug, created_by: user.id })
+      .insert({ ...orgData, slug })
       .select()
       .single();
     if (error) throw error;
     return data;
-  }, [user]);
+  }, []);
 
   const value = {
     entities, workflows, dashboardWidgets, loading,

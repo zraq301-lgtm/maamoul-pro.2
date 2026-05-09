@@ -9,7 +9,6 @@ export const useData = () => useContext(DataContext);
 export function DataProvider({ children }) {
   const { currentOrg, user, hasPermission } = useAuth();
   const [entities, setEntities] = useState([]);
-  const [records, setRecords] = useState([]);
   const [workflows, setWorkflows] = useState([]);
   const [dashboardWidgets, setDashboardWidgets] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,42 +16,66 @@ export function DataProvider({ children }) {
   const fetchEntities = useCallback(async () => {
     if (!currentOrg) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('dynamic_entities')
-      .select('*, dynamic_fields(*)')
-      .eq('organization_id', currentOrg.id)
-      .order('created_at', { ascending: true });
-    setEntities(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('dynamic_entities')
+        .select('*, dynamic_fields(*)')
+        .eq('organization_id', currentOrg.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      setEntities(data || []);
+    } catch (err) {
+      console.warn('Fetch entities error:', err.message);
+      setEntities([]);
+    }
     setLoading(false);
   }, [currentOrg]);
 
   const fetchRecords = useCallback(async (entityId) => {
     if (!currentOrg || !entityId) return [];
-    const { data } = await supabase
-      .from('dynamic_records')
-      .select('*, record_values(*)')
-      .eq('entity_id', entityId)
-      .eq('organization_id', currentOrg.id)
-      .order('created_at', { ascending: false });
-    return data || [];
+    try {
+      const { data, error } = await supabase
+        .from('dynamic_records')
+        .select('*, record_values(*)')
+        .eq('entity_id', entityId)
+        .eq('organization_id', currentOrg.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('Fetch records error:', err.message);
+      return [];
+    }
   }, [currentOrg]);
 
   const fetchWorkflows = useCallback(async () => {
     if (!currentOrg) return;
-    const { data } = await supabase
-      .from('workflows')
-      .select('*, workflow_stages(*), workflow_transitions(*)')
-      .eq('organization_id', currentOrg.id);
-    setWorkflows(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('*, workflow_stages(*), workflow_transitions(*)')
+        .eq('organization_id', currentOrg.id);
+      if (error) throw error;
+      setWorkflows(data || []);
+    } catch (err) {
+      console.warn('Fetch workflows error:', err.message);
+      setWorkflows([]);
+    }
   }, [currentOrg]);
 
   const fetchDashboardWidgets = useCallback(async () => {
     if (!currentOrg) return;
-    const { data } = await supabase
-      .from('dashboard_widgets')
-      .select('*')
-      .eq('organization_id', currentOrg.id);
-    setDashboardWidgets(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('dashboard_widgets')
+        .select('*')
+        .eq('organization_id', currentOrg.id);
+      if (error) throw error;
+      setDashboardWidgets(data || []);
+    } catch (err) {
+      console.warn('Fetch widgets error:', err.message);
+      setDashboardWidgets([]);
+    }
   }, [currentOrg]);
 
   useEffect(() => {
@@ -122,7 +145,7 @@ export function DataProvider({ children }) {
         value_number: typeof val === 'number' ? val : null,
         value_boolean: typeof val === 'boolean' ? val : null,
         value_date: val instanceof Date ? val.toISOString().split('T')[0] : null,
-        value_json: typeof val === 'object' && val !== null ? val : null,
+        value_json: typeof val === 'object' && val !== null && !(val instanceof Date) ? val : null,
       }));
       await supabase.from('record_values').insert(values);
     }
@@ -148,7 +171,7 @@ export function DataProvider({ children }) {
           value_number: typeof val === 'number' ? val : null,
           value_boolean: typeof val === 'boolean' ? val : null,
           value_date: val instanceof Date ? val.toISOString().split('T')[0] : null,
-          value_json: typeof val === 'object' && val !== null ? val : null,
+          value_json: typeof val === 'object' && val !== null && !(val instanceof Date) ? val : null,
         }, { onConflict: 'record_id,field_id' });
       }
     }
@@ -192,7 +215,7 @@ export function DataProvider({ children }) {
   }, [user]);
 
   const value = {
-    entities, records, workflows, dashboardWidgets, loading,
+    entities, workflows, dashboardWidgets, loading,
     fetchEntities, fetchRecords, fetchWorkflows, fetchDashboardWidgets,
     createEntity, updateEntity, deleteEntity,
     createRecord, updateRecord, deleteRecord,

@@ -25,43 +25,86 @@ export function AuthProvider({ children }) {
   const [currentRole, setCurrentRole] = useState(null);
 
   const fetchProfile = useCallback(async (userId) => {
-    const { data } = await supabase
-      .from('organization_members')
-      .select('*, organizations(*)')
-      .eq('user_id', userId);
+    try {
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('*, organizations(*)')
+        .eq('user_id', userId);
 
-    if (data && data.length > 0) {
-      setOrganizations(data.map(d => d.organizations));
-      const savedOrgId = localStorage.getItem('currentOrgId');
-      const org = savedOrgId
-        ? data.find(d => d.organization_id === savedOrgId)?.organizations || data[0].organizations
-        : data[0].organizations;
-      setCurrentOrg(org);
-      const member = data.find(d => d.organization_id === org.id);
-      setCurrentRole(member?.role || 'member');
-      setProfile({ ...data[0], organization_id: data[0].organization_id });
-      localStorage.setItem('currentOrgId', org.id);
+      if (error) {
+        console.warn('Fetch profile error:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const validOrgs = data.filter(d => d.organizations).map(d => d.organizations);
+        setOrganizations(validOrgs);
+        const savedOrgId = localStorage.getItem('currentOrgId');
+        const org = savedOrgId
+          ? data.find(d => d.organization_id === savedOrgId)?.organizations || validOrgs[0]
+          : validOrgs[0];
+        if (org) {
+          setCurrentOrg(org);
+          const member = data.find(d => d.organization_id === org.id);
+          setCurrentRole(member?.role || 'member');
+          setProfile({ ...data[0], organization_id: data[0].organization_id });
+          localStorage.setItem('currentOrgId', org.id);
+        }
+      }
+    } catch (err) {
+      console.warn('Fetch profile exception:', err.message);
     }
   }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
-      (async () => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      try {
+        const { data: { session: sess } } = await supabase.auth.getSession();
+        if (!mounted) return;
+
         setSession(sess);
         setUser(sess?.user ?? null);
+
         if (sess?.user) {
           await fetchProfile(sess.user.id);
-        } else {
-          setProfile(null);
-          setOrganizations([]);
-          setCurrentOrg(null);
-          setCurrentRole(null);
         }
-        setLoading(false);
+      } catch (err) {
+        console.warn('Init auth error:', err.message);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (!mounted) return;
+      (async () => {
+        try {
+          setSession(sess);
+          setUser(sess?.user ?? null);
+          if (sess?.user) {
+            await fetchProfile(sess.user.id);
+          } else {
+            setProfile(null);
+            setOrganizations([]);
+            setCurrentOrg(null);
+            setCurrentRole(null);
+          }
+        } catch (err) {
+          console.warn('Auth state change error:', err.message);
+        } finally {
+          setLoading(false);
+        }
       })();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [fetchProfile]);
 
   const switchOrganization = useCallback(async (orgId) => {
@@ -69,13 +112,17 @@ export function AuthProvider({ children }) {
     if (!org) return;
     setCurrentOrg(org);
     localStorage.setItem('currentOrgId', orgId);
-    const { data } = await supabase
-      .from('organization_members')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('organization_id', orgId)
-      .maybeSingle();
-    setCurrentRole(data?.role || 'member');
+    try {
+      const { data } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', orgId)
+        .maybeSingle();
+      setCurrentRole(data?.role || 'member');
+    } catch (err) {
+      console.warn('Switch org error:', err.message);
+    }
   }, [organizations, user]);
 
   const signUp = useCallback(async (email, password, fullName) => {
@@ -95,8 +142,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (err) {
+      console.warn('Sign out error:', err.message);
+    }
     setUser(null);
     setSession(null);
     setProfile(null);

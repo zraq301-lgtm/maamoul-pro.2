@@ -1,24 +1,18 @@
 {
   "appId": "com.mamoul.app",
-  "appName": "معمول",
+  "appName": "RaqQ",
   "webDir": "dist",
   "server": {
     "androidScheme": "https",
     "cleartext": true
   },
   "plugins": {
-    "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
-    },
-    "LocalNotifications": {
-      "smallIcon": "ic_stat_name",
-      "iconColor": "#FFC0CB"
-    },
     "CapacitorHttp": {
       "enabled": true
     },
-    "AdMob": {
-      "initializeOnStartup": true
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_name",
+      "iconColor": "#3b82f6"
     }
   },
   "android": {

@@ -1,0 +1,176 @@
+/* الإعدادات العامة - مريحة للعين ومناسبة للموبايل */
+.app-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding-bottom: 110px; 
+  font-family: 'Tajawal', sans-serif;
+  font-size: 18px; /* تكبير الخط الأساسي قليلاً لسهولة القراءة */
+}
+
+/* 1. الهيدر العلوي - ارتفاع متوسط وواضح */
+.main-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: white;
+  height: 75px; 
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.app-logo {
+  color: #ff4d7d;
+  font-weight: 900;
+  font-size: 22px;
+}
+
+/* 2. أيقونات الإحصائيات في الهيدر */
+.stats-container {
+  display: flex;
+  gap: 10px;
+}
+
+.stats-badge {
+  display: flex;
+  align-items: center;
+  background: #fff5f7;
+  padding: 8px 14px; 
+  border-radius: 12px;
+  border: 1px solid #ff4d7d26;
+  font-size: 16px; 
+  font-weight: bold;
+}
+
+.stats-badge svg {
+  width: 24px !important; 
+  height: 24px !important;
+}
+
+/* 3. شريط التنقل السفلي - أزرار سهلة الضغط */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 85px; 
+  background-color: white;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 2000;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #a0aec0;
+}
+
+.nav-item svg {
+  width: 32px !important; 
+  height: 32px !important;
+}
+
+.nav-item.active {
+  color: #ff4d7d;
+}
+
+.nav-label {
+  font-size: 13px; 
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+/* 4. زر الإنتاج المركزي (FAB) */
+.fab-button-container {
+  position: relative;
+  top: -25px;
+  z-index: 2100;
+}
+
+.fab-button {
+  width: 80px; 
+  height: 80px;
+  border-radius: 50%;
+  background-color: #ff4d7d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(255, 77, 125, 0.4);
+  border: 6px solid white;
+}
+
+/* 5. ضبط محتوى الصفحة والشبكة (GRID) */
+.page-content {
+  padding: 20px;
+  margin-top: 85px; 
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 15px;
+}
+
+/* تنسيق البطاقة (Card) المطور */
+.card {
+  background: white;
+  padding: 25px 15px; 
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.card svg {
+  width: 45px !important;
+  height: 45px !important;
+  margin-bottom: 5px;
+}
+
+.card-title {
+  font-size: 16px;
+  color: #666;
+}
+
+/* تنسيق السعر (المضاف والمعدل) */
+.price-tag {
+  color: #27ae60; /* لون أخضر مريح للعين */
+  font-weight: 800;
+  font-size: 18px;
+  background: #eafaf1;
+  padding: 6px 12px;
+  border-radius: 10px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+/* تنسيق القيمة الإجمالية (المضاف والمعدل) */
+.total-value {
+  font-size: 13px;
+  color: #7f8c8d;
+  border-top: 1px dashed #eee; /* استخدام خط مقطع يعطي شكلاً أرقى */
+  padding-top: 8px;
+  margin-top: 5px;
+  width: 100%;
+  font-weight: bold;
+}
+
+.card-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #333;
+}
